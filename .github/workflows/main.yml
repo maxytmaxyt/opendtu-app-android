@@ -2,10 +2,15 @@ name: Build & Release APK
 
 on:
   workflow_dispatch:
+    inputs:
+      clean:
+        description: "Perform a clean build"
+        required: false
+        type: boolean
+        default: false
   push:
     tags:
       - "v*"
-
 
 permissions:
   contents: write
@@ -18,19 +23,30 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v4
 
-      - name: Setup JDK 17
+      - name: Setup JDK 17 + Gradle Cache
         uses: actions/setup-java@v4
         with:
           distribution: "temurin"
           java-version: "17"
+          cache: gradle
 
-      - name: Install Gradle (for wrapper generation)
-        run: sudo apt-get update && sudo apt-get install -y gradle
+      - name: Cache Gradle Wrapper + Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
 
-      - name: Generate Gradle Wrapper if missing
+      - name: Ensure Gradle Wrapper
         run: |
           if [ ! -f "gradlew" ]; then
-            gradle wrapper
+            echo "Generating Gradle Wrapper..."
+            curl -s https://services.gradle.org/distributions/gradle-8.2-bin.zip -o gradle.zip
+            unzip -q gradle.zip
+            ./gradle-8.2/bin/gradle wrapper
           fi
 
       - name: Make gradlew executable
@@ -46,12 +62,15 @@ jobs:
             git push
           fi
 
+      - name: Clean (optional)
+        if: ${{ github.event.inputs.clean == 'true' }}
+        run: ./gradlew clean
+
       - name: Build Release APK
         run: ./gradlew assembleRelease
 
       - name: Rename APK
-        run: |
-          mv app/build/outputs/apk/release/app-release.apk app-release.apk
+        run: mv app/build/outputs/apk/release/app-release.apk app-release.apk
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
