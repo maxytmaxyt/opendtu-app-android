@@ -1,9 +1,14 @@
+plugins {
+    id "com.android.application"
+    id "org.jetbrains.kotlin.android"
+}
+
 android {
-    namespace "com.OpenDTU.app"
+    namespace "com.opendtu.app"
     compileSdk 34
 
     defaultConfig {
-        applicationId "com.OpenDTU.app"
+        applicationId "com.opendtu.app"
         minSdk 23
         targetSdk 34
         versionCode 1
@@ -24,4 +29,10 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+}
+
+dependencies {
+    implementation "androidx.appcompat:appcompat:1.7.0"
+    implementation "com.google.android.material:material:1.12.0"
+    implementation "androidx.core:core-ktx:1.13.1"
 }
