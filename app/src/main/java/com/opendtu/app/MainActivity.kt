@@ -67,34 +67,47 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
-    private fun loadHome() {
-        container.removeAllViews()
-        val layout = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(50, 50, 50, 50)
-        }
-
-        val tv = TextView(this).apply { text = "OpenDTU Home"; textSize = 24f }
-        
-        val ipInput = EditText(this).apply {
-            hint = "DTU IP Address"
-            setText(getSharedPreferences("prefs", MODE_PRIVATE).getString("dtu_ip", ""))
-        }
-
-        val saveBtn = Button(this).apply {
-            text = "Save IP"
-            setOnClickListener {
-                val ip = ipInput.text.toString()
-                getSharedPreferences("prefs", MODE_PRIVATE).edit().putString("dtu_ip", ip).apply()
-                Toast.makeText(context, "IP Saved: $ip", Toast.LENGTH_SHORT).show()
-            }
-        }
-
-        layout.addView(tv)
-        layout.addView(ipInput)
-        layout.addView(saveBtn)
-        container.addView(layout)
+    // In deiner MainActivity.kt - Ersetze loadHome() mit diesem Code:
+private fun loadHome() {
+    container.removeAllViews()
+    val layout = LinearLayout(this).apply {
+        orientation = LinearLayout.VERTICAL
+        setPadding(50, 50, 50, 50)
     }
+
+    val prefs = getSharedPreferences("prefs", MODE_PRIVATE)
+
+    val ipInput = EditText(this).apply { 
+        hint = "IP (z.B. 192.168.1.50)"; setText(prefs.getString("dtu_ip", "")) 
+    }
+    val userInput = EditText(this).apply { 
+        hint = "Benutzername (admin)"; setText(prefs.getString("dtu_user", "admin")) 
+    }
+    val passInput = EditText(this).apply { 
+        hint = "Passwort"; inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+        setText(prefs.getString("dtu_pass", "openDTU42")) 
+    }
+
+    val saveBtn = Button(this).apply {
+        text = "Speichern & Verbinden"
+        setOnClickListener {
+            prefs.edit().apply {
+                putString("dtu_ip", ipInput.text.toString())
+                putString("dtu_user", userInput.text.toString())
+                putString("dtu_pass", passInput.text.toString())
+                apply()
+            }
+            Toast.makeText(context, "Daten gespeichert!", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    layout.addView(TextView(this).apply { text = "OpenDTU Login"; textSize = 20f })
+    layout.addView(ipInput)
+    layout.addView(userInput)
+    layout.addView(passInput)
+    layout.addView(saveBtn)
+    container.addView(layout)
+}
 
     // --- Update Logic ---
     private fun checkUpdate() {
