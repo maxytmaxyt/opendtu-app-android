@@ -5,7 +5,6 @@ import android.widget.*
 
 class SettingsView(private val context: Context) {
     
-    // onUpdateCheck is a callback function passed from MainActivity
     fun load(container: FrameLayout, onUpdateCheck: () -> Unit) {
         container.removeAllViews()
         
@@ -15,40 +14,38 @@ class SettingsView(private val context: Context) {
         }
 
         val btnUpdate = Button(context).apply {
-            text = "Check for App Update (GitHub)"
+            text = "Auf App-Update prüfen"
             setOnClickListener { onUpdateCheck() }
         }
 
         val btnReboot = Button(context).apply {
-            text = "Reboot OpenDTU"
+            text = "OpenDTU neu starten"
             setOnClickListener {
-                ApiClient(context).post("/api/maintenance/reboot", "{}") { success ->
+                ApiClient(context).post("/api/maintenance/reboot", "{}") { success, error ->
                     (context as MainActivity).runOnUiThread {
-                        Toast.makeText(context, "Reboot triggered: $success", Toast.LENGTH_SHORT).show()
+                        val msg = if (success) "DTU wird neu gestartet..." else "Fehler: $error"
+                        Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
                     }
                 }
             }
         }
 
-        val infoText = TextView(context).apply {
-            text = "\nDTU Endpoints:"
-            textSize = 14f
-        }
-
-        // List of common API endpoints for quick debugging
-        val endpoints = listOf("/api/network/status", "/api/mqtt/status", "/api/system/status")
+        val endpoints = listOf("/api/network/status", "/api/system/status")
         
         layout.addView(btnUpdate)
         layout.addView(btnReboot)
-        layout.addView(infoText)
 
         endpoints.forEach { path ->
             val btn = Button(context).apply {
-                text = "View $path"
+                text = "Debug $path"
                 setOnClickListener {
-                    ApiClient(context).get(path) { resp ->
+                    ApiClient(context).get(path) { resp, error ->
                         (context as MainActivity).runOnUiThread {
-                            Toast.makeText(context, resp ?: "Request failed", Toast.LENGTH_SHORT).show()
+                            if (error != null) {
+                                Toast.makeText(context, "Fehler: $error", Toast.LENGTH_SHORT).show()
+                            } else {
+                                Toast.makeText(context, "Daten empfangen", Toast.LENGTH_SHORT).show()
+                            }
                         }
                     }
                 }
