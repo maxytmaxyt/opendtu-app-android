@@ -101,7 +101,7 @@ class MainActivity : AppCompatActivity() {
         Thread {
             try {
                 // Replace with your real GitHub repo
-                val json = URL("https://api.github.com/repos/USERNAME/REPO/releases/latest").readText()
+                val json = URL("https://api.github.com/reposmaxytmaxyt/opendtu-app-android/releases/latest").readText()
                 val obj = JSONObject(json)
                 val asset = obj.getJSONArray("assets").getJSONObject(0)
                 val url = asset.getString("browser_download_url")
