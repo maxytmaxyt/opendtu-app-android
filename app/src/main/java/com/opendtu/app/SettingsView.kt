@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
+import android.util.Log // Wichtig: Import hinzugefügt
 import android.view.Gravity
 import android.widget.*
 
@@ -64,6 +65,7 @@ class SettingsView(private val context: Context) {
                         if (error != null) {
                             Toast.makeText(context, "Fehler: $error", Toast.LENGTH_SHORT).show()
                         } else {
+                            // Now Log is correctly imported
                             Log.d("SettingsView", "API Response: $resp")
                             Toast.makeText(context, "Daten in Logcat ausgegeben", Toast.LENGTH_SHORT).show()
                         }
@@ -92,11 +94,20 @@ class SettingsView(private val context: Context) {
         return Button(context).apply {
             text = txt
             setTextColor(Color.WHITE)
-            setBackgroundColor(Color.parseColor(colorHex))
+            // Modern design with rounded corners instead of flat background
+            val shape = GradientDrawable().apply {
+                cornerRadius = 20f
+                setColor(Color.parseColor(colorHex))
+            }
+            background = shape
+            
+            // Support for all-caps off to look cleaner
+            isAllCaps = false
+            
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, 
-                140
-            ).apply { setMargins(0, 0, 0, 25) }
+                150 // Slightly taller for better touch targets
+            ).apply { setMargins(0, 0, 0, 30) }
             
             setOnClickListener { onClick() }
         }
