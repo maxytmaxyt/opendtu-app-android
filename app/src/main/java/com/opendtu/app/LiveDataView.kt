@@ -1,0 +1,19 @@
+package com.opendtu.app
+
+import android.content.Context
+import android.widget.FrameLayout
+import android.widget.TextView
+
+class LiveDataView(private val context: Context) {
+    fun load(container: FrameLayout) {
+        container.removeAllViews()
+        val tv = TextView(context).apply { text = "Fetching Live Data..." }
+        container.addView(tv)
+
+        ApiClient(context).get("/api/livedata/status") { response ->
+            (context as MainActivity).runOnUiThread {
+                tv.text = response ?: "Connection Error"
+            }
+        }
+    }
+}
