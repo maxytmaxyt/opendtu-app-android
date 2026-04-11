@@ -18,42 +18,47 @@ import java.net.URL
 class MainActivity : AppCompatActivity() {
 
     private var downloadId: Long = -1
+    private lateinit var container: FrameLayout
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val layout = LinearLayout(this)
-        layout.orientation = LinearLayout.VERTICAL
+        val layout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+        }
 
-        val container = FrameLayout(this)
-        // generateViewId() statt hardcodierter ID
-        container.id = View.generateViewId()
-        container.layoutParams = LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f
-        )
+        container = FrameLayout(this).apply {
+            id = View.generateViewId()
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f
+            )
+        }
 
-        val nav = BottomNavigationView(this)
-        nav.menu.add(0, 1, 0, "Home")
-        nav.menu.add(0, 2, 1, "Stats")
-        nav.menu.add(0, 3, 2, "Settings")
+        val nav = BottomNavigationView(this).apply {
+            menu.add(0, 1, 0, "Home")
+            menu.add(0, 2, 1, "Live")
+            menu.add(0, 3, 2, "Inverters")
+            menu.add(0, 4, 3, "Settings")
+        }
 
         layout.addView(container)
         layout.addView(nav)
-
         setContentView(layout)
 
-        loadHome(container)
+        // Load Initial View
+        loadHome()
 
         nav.setOnItemSelectedListener {
             when (it.itemId) {
-                1 -> loadHome(container)
-                2 -> loadStats(container)
-                3 -> loadSettings(container)
+                1 -> loadHome()
+                2 -> LiveDataView(this).load(container)
+                3 -> InverterView(this).load(container)
+                4 -> SettingsView(this).load(container) { checkUpdate() }
             }
             true
         }
 
-        // API 33+: ContextCompat.registerReceiver mit RECEIVER_NOT_EXPORTED
+        // Register Update Receiver
         ContextCompat.registerReceiver(
             this,
             onDownloadComplete,
@@ -62,32 +67,40 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
-    private fun loadHome(container: FrameLayout) {
-        val tv = TextView(this)
-        tv.text = "Home"
+    private fun loadHome() {
         container.removeAllViews()
-        container.addView(tv)
+        val layout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(50, 50, 50, 50)
+        }
+
+        val tv = TextView(this).apply { text = "OpenDTU Home"; textSize = 24f }
+        
+        val ipInput = EditText(this).apply {
+            hint = "DTU IP Address"
+            setText(getSharedPreferences("prefs", MODE_PRIVATE).getString("dtu_ip", ""))
+        }
+
+        val saveBtn = Button(this).apply {
+            text = "Save IP"
+            setOnClickListener {
+                val ip = ipInput.text.toString()
+                getSharedPreferences("prefs", MODE_PRIVATE).edit().putString("dtu_ip", ip).apply()
+                Toast.makeText(context, "IP Saved: $ip", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        layout.addView(tv)
+        layout.addView(ipInput)
+        layout.addView(saveBtn)
+        container.addView(layout)
     }
 
-    private fun loadStats(container: FrameLayout) {
-        val tv = TextView(this)
-        tv.text = "Stats"
-        container.removeAllViews()
-        container.addView(tv)
-    }
-
-    private fun loadSettings(container: FrameLayout) {
-        val btn = Button(this)
-        btn.text = "Check Update"
-        btn.setOnClickListener { checkUpdate() }
-        container.removeAllViews()
-        container.addView(btn)
-    }
-
+    // --- Update Logic ---
     private fun checkUpdate() {
         Thread {
             try {
-                // TODO: USERNAME/REPO durch echten Repo-Namen ersetzen
+                // Replace with your real GitHub repo
                 val json = URL("https://api.github.com/repos/USERNAME/REPO/releases/latest").readText()
                 val obj = JSONObject(json)
                 val asset = obj.getJSONArray("assets").getJSONObject(0)
@@ -100,11 +113,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun downloadApk(url: String) {
-        val request = DownloadManager.Request(Uri.parse(url))
-        request.setTitle("Update")
-        request.setDestinationInExternalFilesDir(this, Environment.DIRECTORY_DOWNLOADS, "update.apk")
+        val request = DownloadManager.Request(Uri.parse(url)).apply {
+            setTitle("OpenDTU Update")
+            setDestinationInExternalFilesDir(this@MainActivity, Environment.DIRECTORY_DOWNLOADS, "update.apk")
+        }
         val dm = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
         downloadId = dm.enqueue(request)
+        Toast.makeText(this, "Downloading update...", Toast.LENGTH_SHORT).show()
     }
 
     private val onDownloadComplete = object : BroadcastReceiver() {
