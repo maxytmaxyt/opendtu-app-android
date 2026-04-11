@@ -98,6 +98,7 @@ class LiveDataView(private val context: Context) {
         }
     }
 
+    // ... (oberer Teil bleibt gleich wie zuvor)
     private fun addCard(label: String, value: String, bgColor: Int) {
         val card = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
@@ -107,10 +108,14 @@ class LiveDataView(private val context: Context) {
             params.setMargins(0, 0, 0, 30)
             layoutParams = params
         }
-        val lbl = TextView(context).apply { text = label; textColor = Color.WHITE; textSize = 14f }
+        val lbl = TextView(context).apply { 
+            text = label
+            setTextColor(Color.WHITE) // FIX: setTextColor statt textColor
+            textSize = 14f 
+        }
         val valTxt = TextView(context).apply { 
             text = value
-            textColor = Color.WHITE
+            setTextColor(Color.WHITE) // FIX: setTextColor statt textColor
             textSize = 32f
             setTypeface(null, Typeface.BOLD)
         }
@@ -118,6 +123,7 @@ class LiveDataView(private val context: Context) {
         card.addView(valTxt)
         mainLayout.addView(card)
     }
+// ... (restlicher Teil bleibt gleich)
 
     private fun addInfoRow(label: String, value: String, isBold: Boolean = false) {
         val row = LinearLayout(context).apply {
